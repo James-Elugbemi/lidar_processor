@@ -19,6 +19,12 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(PCL 1.3 REQUIRED)
+find_package(pcl_ros REQUIRED)
+
+include_directories(${PCL_INCLUDE_DIRS})
+link_directories(${PCL_LIBRARY_DIRS})
+add_definitions(${PCL_DEFINITIONS})
 
 # BUILDING
 
@@ -28,10 +34,14 @@ ament_target_dependencies(
   rclcpp
   sensor_msgs
   std_msgs
+  pcl
+  pcl_ros
 )
 target_include_directories(lidar_processor PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
+
+target_link_libraries(lidar_processor ${PCL_LIBRARIES})
 
 install(TARGETS lidar_processor
   DESTINATION lib/${PROJECT_NAME})

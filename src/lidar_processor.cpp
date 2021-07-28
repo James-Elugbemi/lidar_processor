@@ -25,6 +25,13 @@
 
 #include "lidar_processor/lidar_processor.hpp"
 
+#include <pcl/conversions.h>
+
+#include <pcl/point_types.h>
+#include <pcl/filters/passthrough.h>
+
+#include <pcl_ros/point_cloud.h>
+
 namespace LidarProcessor
 {
 LidarProcessor::LidarProcessor(rclcpp::NodeOptions options)
@@ -47,6 +54,28 @@ void LidarProcessor::raw_pcl_callback(const sensor_msgs::msg::PointCloud2::Share
 {
   msg->header.stamp = this->get_clock()->now();  // rewrite time
   msg->header.frame_id = "laser_link";  // fix weird pointcloud frame?
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_filtered (new pcl::PointCloud<pcl::PointXYZ>);
+  
+  //TODO: find a way to convert PointCloud2 into pcl's PointXYZ
+  pcl::fromPCLPointCloud2（* msg，* cloud);
+  //???
+  
+  pcl::PassThrough<pcl::PointXYZ> pass;
+  pass.setInputCloud (cloud);
+  pass.setFilterFieldName ("z");
+  pass.setFilterLimits (0.0, 1.0);
+  pass.setFilterLimitsNegative (true);
+  pass.filter (*cloud_filtered);
+
+  //TODO: once filtering has finished convert the PointXYZ back into a ROS message
+  //lastly publish the message 
+  
+  for (const auto& point: *cloud_filtered)
+  	msg->points.push_back (pcl::PointXYZ(point.x, point.y, point.z));
+  
+  
   filtered_pcl_publisher_->publish(*msg);
 }
 
